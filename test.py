@@ -28,21 +28,24 @@ def predict_one(id):
             one_text = tweet.retweeted_status.full_text
         else:
             one_text = tweet.full_text
-        print(one_text)
+
+        X = np.append(X, one_text)
+        X = convert(20000, X, 104)
+
+        model = load_model("model.h5")
+        res = model.predict(X)
+        if np.round(res[-1]).astype(np.int32) > 0:
+            print("Classified \"" + one_text + "\" as positive")
+        else:
+            print("Classified \"" + one_text + "\" as negative")
+    
     except:
-        print("error")
+        print("Invalid ID")
 
-    X = np.append(X, one_text)
-
-    X = convert(20000, X, 104)
-
-    model = load_model("model.h5")
-    res = model.predict(X)
-    print(np.round(res[-1]).astype(np.int32))
+    
 
 
-
-predict_one(1465832997727449095)
+predict_one(1465833001250549769)
 
 
 
