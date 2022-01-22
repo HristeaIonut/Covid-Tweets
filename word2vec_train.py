@@ -28,11 +28,11 @@ if __name__ == '__main__':
         output_mode='int',
         )
     vectorize_layer.adapt(tweets_ds.batch(1024))
+    pickle.dump(vectorize_layer.get_vocabulary(), open('datas/vocabulary.pkl', 'wb'))
     inverse_vocab = vectorize_layer.get_vocabulary()
     # Vectorize the data in tweets_ds.
     text_vector_ds = tweets_ds.batch(1024).prefetch(AUTOTUNE).map(vectorize_layer).unbatch()
     sequences = list(text_vector_ds.as_numpy_iterator())
-    print(len(sequences))
     targets, contexts, labels = generate_training_data(
         sequences=sequences,
         window_size=2,
@@ -61,16 +61,4 @@ if __name__ == '__main__':
                      loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
                      metrics=['accuracy'])
     word2vec.fit(dataset, epochs=20)
-    weights = word2vec.get_layer('w2v_embedding').get_weights()[0]
-    vocab = vectorize_layer.get_vocabulary()
-    out_v = io.open('datas/vectors.tsv', 'w', encoding='utf-8')
-    out_m = io.open('datas/metadata.tsv', 'w', encoding='utf-8')
-
-    for index, word in enumerate(vocab):
-        if index == 0:
-            continue  # skip 0, it's padding.
-        vec = weights[index]
-        out_v.write('\t'.join([str(x) for x in vec]) + "\n")
-        out_m.write(word + "\n")
-    out_v.close()
-    out_m.close()
+    word2vec.save_embedding()

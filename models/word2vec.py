@@ -1,3 +1,4 @@
+import pickle as pkl
 import tensorflow as tf
 from tensorflow.keras import layers
 
@@ -29,3 +30,6 @@ class Word2Vec(tf.keras.Model):
         dots = tf.einsum('be,bce->bc', word_emb, context_emb)
         # dots: (batch, context)
         return dots
+
+    def save_embedding(self):
+        pkl.dump(self.target_embedding, open('models/embedding.layer', 'wb'))

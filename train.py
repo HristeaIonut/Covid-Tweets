@@ -1,34 +1,42 @@
+import pickle
+
+from keras.layers import LSTM, Conv1D, MaxPooling1D, Flatten
+from tensorflow.keras.layers import GlobalAveragePooling1D, Dense, TextVectorization
+from models.covid_tweets import CovidTweets
+import tensorflow as tf
 import pickle as pkl
 import numpy as np
-from keras.models import load_model
-from keras import Sequential
-from keras.layers import Embedding, LSTM, Dense
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
 
-data = pkl.load(open("datas/data_with_retweet.pkl", "rb"))
-X, y = zip(*data)
-max_length = 104
 
-X = np.asarray(X)
-y = np.asarray(y, dtype=np.float32)
-old_range = 1 - (-1)
-new_range = 1 - 0
-y = (y - (-1)) * new_range / old_range
-y = [0 if i < 0.5 else 1 for i in y]
-y = np.asarray(y, dtype=np.int32)
+if __name__ == '__main__':
+    data = pkl.load(open("datas/data_with_retweet.pkl", "rb"))
+    X, y = zip(*data)
+    X = np.asarray(X)
+    y = np.asarray(y, dtype=np.float32)
+    old_range = 1 - (-1)
+    new_range = 1 - 0
+    y = (y - (-1)) * new_range / old_range
+    y = [0 if i < 0.5 else 1 for i in y]
+    y = np.asarray(y, dtype=np.int32)
 
-max_words = 20000
-tokenizer = Tokenizer(num_words=max_words)
-tokenizer.fit_on_texts(X)
-sequences = tokenizer.texts_to_sequences(X)
-tweets = pad_sequences(sequences, maxlen=max_length)
-vocab_size = len(tokenizer.word_index)+1
+    embedding = pickle.load(open('models/embedding.layer', 'rb'))
 
-model = Sequential()
-model.add(Embedding(20000, 128))
-model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
-model.add(Dense(1, activation='sigmoid'))
-model.compile(optimizer="adam", loss='mse', metrics=['accuracy'])
-model.fit(tweets, y, batch_size=32, epochs=10, validation_split=0.3)
-model.save("model.h5")
+    model = tf.keras.Sequential([
+        TextVectorization(
+            vocabulary=pickle.load(open('datas/vocabulary.pkl', 'rb')),
+            output_mode='int',
+            output_sequence_length=60
+        ),
+        embedding,
+        LSTM(128, dropout=0.2, recurrent_dropout=0.2),
+        Dense(64, activation='relu'),
+        Dense(32, activation='relu'),
+        Dense(1, activation='sigmoid')
+    ])
+
+    # model = CovidTweets('datas/metadata.tsv', 'datas/vectors.tsv')
+    model.compile(loss='mse',
+             optimizer='adam', metrics=['accuracy'])
+
+    model.fit(X, y, batch_size=128, epochs=20, validation_split=0.2)
+    model.save("model.h5")
