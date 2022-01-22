@@ -21,13 +21,12 @@ if __name__ == '__main__':
     x, _ = zip(*data)
 
     vocab_size = 20000
-    sequence_length = 100
     tweets_ds = tf.data.TextLineDataset(['tweets/tweet_texts.txt'])\
         .filter(lambda foo: tf.cast(tf.strings.length(foo), bool))
     vectorize_layer = layers.TextVectorization(
         max_tokens=vocab_size,
         output_mode='int',
-        output_sequence_length=sequence_length)
+        )
     vectorize_layer.adapt(tweets_ds.batch(1024))
     inverse_vocab = vectorize_layer.get_vocabulary()
     # Vectorize the data in tweets_ds.
