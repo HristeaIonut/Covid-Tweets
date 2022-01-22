@@ -16,14 +16,6 @@ SEED = 42
 AUTOTUNE = tf.data.AUTOTUNE
 
 
-# Now, create a custom standardization function to lowercase the text and
-# remove punctuation.
-def custom_standardization(input_data):
-    lowercase = tf.strings.lower(input_data)
-    return tf.strings.regex_replace(lowercase,
-                                    '[%s]' % re.escape(string.punctuation), '')
-
-
 if __name__ == '__main__':
     data = pickle.load(open('datas/data_with_retweet.pkl', 'rb'))
     x, _ = zip(*data)
@@ -31,9 +23,8 @@ if __name__ == '__main__':
     vocab_size = 20000
     sequence_length = 100
     tweets_ds = tf.data.TextLineDataset(['tweets/tweet_texts.txt'])\
-        .filter(lambda x: tf.cast(tf.strings.length(x), bool))
+        .filter(lambda foo: tf.cast(tf.strings.length(foo), bool))
     vectorize_layer = layers.TextVectorization(
-        standardize=custom_standardization,
         max_tokens=vocab_size,
         output_mode='int',
         output_sequence_length=sequence_length)
